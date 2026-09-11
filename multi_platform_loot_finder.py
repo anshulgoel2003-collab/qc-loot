@@ -4,8 +4,8 @@ import requests
 from playwright.sync_api import sync_playwright
 
 # 1. GLOBAL SYSTEM CONFIGURATION
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8883600849:AAHYq4WPcKEIIBvSiNXwdacw-PgVP7I6paU")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "@loot")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "YOUR_TELEGRAM_CHAT_ID")
 LOOT_DISCOUNT_THRESHOLD = 75.0
 
 # Strategic NCR warehouse pincodes
