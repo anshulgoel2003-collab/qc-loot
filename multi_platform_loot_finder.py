@@ -1,111 +1,75 @@
 import os
 import re
-import time
 import requests
-from playwright.sync_api import sync_playwright
 
 # 1. SYSTEM GATEWAY SETTINGS
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "YOUR_TELEGRAM_CHAT_ID")
-LOOT_DISCOUNT_THRESHOLD = 20.0  # Kept at 20.0 to guarantee immediate smartphone alert triggers!
+LOOT_DISCOUNT_THRESHOLD = 20.0  # Set low at 20.0 to guarantee you get immediate test alerts!
 
-NCR_WAREHOUSE_PINCODES = ["110020", "110040", "110050", "201306", "122018"]
-SPAM_KEYWORDS = ["carry bag", "paper bag", "sachet", "polybag", "sample", "tester"]
-
-def is_spam(name: str) -> bool:
-    return any(w in name.lower() for w in SPAM_KEYWORDS)
-
-def send_loot_alert(platform: str, name: str, price: float, mrp: float, discount: float, pin: str):
-    if is_spam(name): return
+def send_loot_alert(deal_title: str, deal_link: str):
+    """Sends a formatted push notification alert directly to your phone via Telegram."""
     url = f"https://telegram.org{TELEGRAM_TOKEN}/sendMessage"
-    msg = (
+    
+    alert_message = (
         f"🚨 *⚠️ LOOT DEAL DETECTED* 🚨\n\n"
-        f"📦 *Product:* {name}\n"
-        f"🏪 *Platform:* {platform.upper()}\n"
-        f"💰 *Deal Price:* ₹{int(price)}  (MRP: ~₹{int(mrp)}~)\n"
-        f"📉 *Discount:* `{discount:.1f}% OFF`\n"
-        f"📍 *Pincode:* {pin}\n"
+        f"📦 *Deal:* {deal_title}\n"
+        f"🏪 *Target Platform:* QUICK COMMERCE / ONLINE\n\n"
+        f"👉 *View Live Deal Thread:* {deal_link}\n\n"
+        f"👉 _Open your delivery app immediately and grab it!_"
     )
-    try: 
-        requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": msg, "parse_mode": "Markdown"}, timeout=10)
-    except: 
-        pass
-
-def scrape_blinkit_via_search(context, pincode: str):
-    """Uses direct UI interactions to completely bypass dynamic element name shifts."""
-    page = context.new_page()
+    
+    payload = {"chat_id": TELEGRAM_CHAT_ID, "text": alert_message, "parse_mode": "Markdown"}
     try:
-        print(f"🏠 Loading Blinkit and configuring warehouse sector profile: {pincode}...")
-        page.goto("https://blinkit.com/", timeout=40000, wait_until="domcontentloaded")
-        
-        # Inject target pincode directly to active storage profile cache
-        page.evaluate(f"localStorage.setItem('local_pincode', '{pincode}');")
-        page.goto("https://blinkit.com/", timeout=40000, wait_until="domcontentloaded")
-        time.sleep(4)
-        
-        # --- BULLETPROOF SEARCH WORKAROUND ---
-        # Instead of text selector queries, we force a physical mouse-click right in the middle 
-        # of the upper search strip banner layout area to open the active dynamic typing node.
-        print("🎯 Executing visual UI interaction on main search track layout...")
-        page.mouse.click(600, 45) # Targets standard center-top coordinates of desktop search strips
-        time.sleep(2)
-        
-        # Focus on the actively selected keyboard element and type the search criteria directly
-        page.keyboard.type("gift pack")
-        page.keyboard.press("Enter")
-        print("🔍 Query pushed via keyboard array simulation. Loading shelf cards...")
-        time.sleep(7)  
-        
-        # Force a lazy scroll down to trigger items to compile text streams
-        page.evaluate("window.scrollBy(0, 1500)")
-        time.sleep(3)
-        
-        # Target any interactive standard product links broadly to capture raw items
-        items = page.query_selector_all("a[href*='/prn/'], a[href*='/pn/'], [class*='Card'], [href*='/p/']")
-        print(f"📊 BLINKIT ({pincode}): Uncovered {len(items)} product elements.")
-        
-        for item in items:
-            try:
-                raw_text = item.inner_text().strip()
-                if not raw_text or "₹" not in raw_text:
-                    continue
-                    
-                lines = [line.strip() for line in raw_text.split("\n") if line.strip()]
-                if not lines: continue
-                product_name = lines[0] # Set the top textual line block as product identifier
-                
-                # Sanitize thousand-separator formatting out of string array values
-                clean_text = raw_text.replace(",", "")
-                found_prices = [float(num) for num in re.findall(r"₹\s*([\d.]+)", clean_text)]
-                
-                if len(found_prices) >= 2:
-                    current_price = min(found_prices)
-                    mrp = max(found_prices)
-                    
-                    if mrp > current_price and current_price > 0:
-                        discount = ((mrp - current_price) / mrp) * 100
-                        if discount >= LOOT_DISCOUNT_THRESHOLD:
-                            print(f"✅ Hit Target: {product_name} ({discount:.1f}% OFF)")
-                            send_loot_alert("blinkit", product_name, current_price, mrp, discount, pincode)
-            except: 
-                continue
+        response = requests.post(url, json=payload, timeout=10)
+        if response.status_code == 200:
+            print(f"🚀 Alert dispatched successfully for: {deal_title}")
     except Exception as e:
-        print(f"⚠️ App automation tracking exception: {e}")
-    finally:
-        page.close()
+        print(f"⚠️ Telegram alert failed: {e}")
 
-def main():
-    print("🤖 Launching Visual UI-Based Search Scraper Engine...")
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            viewport={"width": 1440, "height": 900}
-        )
-        for pin in NCR_WAREHOUSE_PINCODES:
-            scrape_blinkit_via_search(context, pin)
-            time.sleep(3)
-        browser.close()
+def monitor_public_deal_aggregators():
+    """Scrapes public deal forums where users instantly post active platform pricing bugs."""
+    print("🔄 Connecting to live public deal aggregator pipelines...")
+    
+    target_url = "https://desidime.com"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    }
+    
+    try:
+        response = requests.get(target_url, headers=headers, timeout=20)
+        if response.status_code == 200:
+            raw_html = response.text
+            
+            # Match standard deal block structures using regex text isolation patterns
+            deal_blocks = re.findall(r'<a class="deal-title"[^>]*href="([^"]+)"[^>]*>([^<]+)</a>', raw_html)
+            print(f"📊 Aggregator Feed: Uncovered {len(deal_blocks)} live market deal updates.")
+            
+            for link, title in deal_blocks:
+                title_clean = title.strip()
+                full_link = f"https://desidime.com{link}"
+                
+                # Check if the title text matches quick commerce apps or key terms
+                is_target_platform = any(word in title_clean.lower() for word in ["blinkit", "zepto", "instamart", "bigbasket", "haldiram", "amazon", "deal", "off"])
+                
+                # Look for explicit percentage markings in the title text
+                has_high_discount = False
+                pct_matches = re.findall(r"(\d+)%", title_clean)
+                for pct in pct_matches:
+                    if float(pct) >= LOOT_DISCOUNT_THRESHOLD:
+                        has_high_discount = True
+                        
+                if "loot" in title_clean.lower() or "glitch" in title_clean.lower() or "free" in title_clean.lower():
+                    has_high_discount = True
+                
+                # If it matches our criteria, fire it to Telegram instantly
+                if is_target_platform or has_high_discount:
+                    print(f"✅ Found matching feed item: {title_clean}")
+                    send_loot_alert(title_clean, full_link)
+        else:
+            print(f"⚠️ Feed access returned status code: {response.status_code}")
+    except Exception as e:
+        print(f"⚠️ System connection error: {e}")
 
 if __name__ == "__main__":
-    main()
+    monitor_public_deal_aggregators()
