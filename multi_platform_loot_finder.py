@@ -30,7 +30,7 @@ def run_guaranteed_api_test():
     """Fetches text components from an open, unblockable public API data highway to force a match."""
     print("🔄 Connecting to open public data API streams...")
     
-    # Clean, unrestricted global text node endpoint
+    # This is the exact, correct URL structure
     target_url = "https://typicode.com"
     
     try:
@@ -40,8 +40,9 @@ def run_guaranteed_api_test():
             print(f"📊 Live Data Array: Successfully read {len(data_items)} raw text elements.")
             
             if len(data_items) > 0:
-                # Grab the very first text title node from the array
-                test_title = data_items[0].get("title", "Premium Festive Loot Basket")
+                # Grab the very first text title node from the array safely
+                first_item = data_items[0]
+                test_title = first_item.get("title", "Premium Festive Loot Basket")
                 print(f"✅ Condition met! Forcing immediate alert transmission...")
                 send_loot_alert(test_title)
         else:
