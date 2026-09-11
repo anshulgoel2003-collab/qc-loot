@@ -3,131 +3,90 @@ import time
 import requests
 from playwright.sync_api import sync_playwright
 
-# 1. GLOBAL SYSTEM CONFIGURATION
+# 1. SYSTEM GATEWAY SETTINGS
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "YOUR_TELEGRAM_CHAT_ID")
-LOOT_DISCOUNT_THRESHOLD = 20.0  # Set at 20.0 for instant diagnostic proof!
+LOOT_DISCOUNT_THRESHOLD = 20.0  # Kept at 20.0 to guarantee you get test alerts right now!
 
 NCR_WAREHOUSE_PINCODES = ["110020", "110040", "110050", "201306", "122018"]
+SPAM_KEYWORDS = ["carry bag", "paper bag", "sachet", "polybag", "sample", "tester"]
 
-SPAM_KEYWORDS = [
-    "carry bag", "paper bag", "sachet", "sachets", "chotu pack", "sample", 
-    "tester", "combo bag", "delivery fee", "packaging charge", "polybag"
-]
+def is_spam(name: str) -> bool:
+    return any(w in name.lower() for w in SPAM_KEYWORDS)
 
-def is_spam(product_name: str) -> bool:
-    name_lower = product_name.lower()
-    return any(keyword in name_lower for keyword in SPAM_KEYWORDS)
-
-def send_loot_alert(platform: str, product_name: str, price: float, mrp: float, discount: float, location: str):
-    if is_spam(product_name):
-        return
+def send_loot_alert(platform: str, name: str, price: float, mrp: float, discount: float, pin: str):
+    if is_spam(name): return
     url = f"https://telegram.org{TELEGRAM_TOKEN}/sendMessage"
-    alert_message = (
+    msg = (
         f"🚨 *⚠️ LOOT DEAL DETECTED* 🚨\n\n"
-        f"📦 *Product:* {product_name}\n"
+        f"📦 *Product:* {name}\n"
         f"🏪 *Platform:* {platform.upper()}\n"
         f"💰 *Deal Price:* ₹{int(price)}  (MRP: ~₹{int(mrp)}~)\n"
         f"📉 *Discount:* `{discount:.1f}% OFF`\n"
-        f"📍 *Target Area/Pincode:* {location}\n\n"
-        f"👉 _Check your app location now!_"
+        f"📍 *Pincode:* {pin}\n"
     )
-    payload = {"chat_id": TELEGRAM_CHAT_ID, "text": alert_message, "parse_mode": "Markdown"}
-    try:
-        requests.post(url, json=payload, timeout=10)
-    except Exception:
-        pass
+    try: requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": msg, "parse_mode": "Markdown"}, timeout=10)
+    except: pass
 
-def inject_stealth_and_cookies(context, platform: str, pincode: str):
-    """Bypasses automated environment signatures and forces micro-location injection."""
+def scrape_blinkit_via_search(context, pincode: str):
+    """Bypasses deep category blocks by mimicking a real search engine user."""
     page = context.new_page()
-    
-    # Execute structural JavaScript overrides to disable bot identification flags
-    page.add_init_script("""
-        Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
-        window.chrome = { runtime: {} };
-        Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3]});
-    """)
-    
-    # Pre-seed essential delivery routing tags to the local browser profile
-    if platform == "blinkit":
-        page.goto("https://blinkit.com/", timeout=40000)
+    try:
+        # Step 1: Open Homepage smoothly
+        print(f"🏠 Opening Blinkit Homepage for pin {pincode}...")
+        page.goto("https://blinkit.com/", timeout=60000, wait_until="networkidle")
+        
+        # Inject location criteria to local browser cache
         page.evaluate(f"localStorage.setItem('local_pincode', '{pincode}');")
-    elif platform == "zepto":
-        page.goto("https://www.zepto.com/", timeout=40000)
-        page.evaluate(f"document.cookie = 'user_pincode={pincode}; path=/;';")
+        page.goto("https://blinkit.com/", timeout=40000, wait_until="domcontentloaded")
         
-    return page
-
-def scroll_to_load_all_products(page):
-    try:
-        for _ in range(6):
-            page.evaluate("window.scrollBy(0, 1000)")
-            time.sleep(1.5)
-    except Exception:
-        pass
-
-def scrape_quick_commerce(context, platform: str, pincode: str):
-    base_urls = {
-        "blinkit": "https://blinkit.com",
-        "zepto": "https://www.zepto.com/uncl/flash-sale/ed6ec473-d970-4881-a547-c39a2fff9745",
-        "instamart": "https://swiggy.com",
-        "bigbasket": "https://bigbasket.com"
-    }
-    if platform not in base_urls: return
-    
-    page = None
-    try:
-        page = inject_stealth_and_cookies(context, platform, pincode)
-        page.goto(base_urls[platform], timeout=60000, wait_until="domcontentloaded")
-        time.sleep(3) # Safe structural pause for framework components
-        
-        scroll_to_load_all_products(page)
-        
-        # Comprehensive fallback element targeting tree arrays
-        products = page.query_selector_all(
-            "[data-testid='product-card'], .product-card, [class*='ProductCard'], "
-            ".ItemCard__Container, [class*='item-card'], a[href*='/pn/'], a[href*='/prn/']"
-        )
-        print(f"📊 {platform.upper()} ({pincode}): Uncovered {len(products)} live elements using generalized layouts.")
-        
-        for prod in products:
-            try:
-                name_elem = prod.query_selector("[data-testid='product-name'], .product-title, h4, h5, [class*='title'], [class*='name']")
-                price_elem = prod.query_selector(".product-price, .price, [style*='color'], [class*='price']")
-                mrp_elem = prod.query_selector(".mrp, [style*='line-through'], [class*='mrp'], strike")
-                
-                if name_elem and price_elem:
-                    name = name_elem.inner_text().strip()
-                    price = float(''.join(c for c in price_elem.inner_text() if c.isdigit() or c=='.'))
-                    
-                    if mrp_elem:
-                        mrp = float(''.join(c for c in mrp_elem.inner_text() if c.isdigit() or c=='.'))
-                    else:
-                        continue
+        # Step 2: Use the Search Box like a real human shopper
+        search_box = page.query_selector("input[placeholder*='Search'], input[type='text']")
+        if search_box:
+            search_box.click()
+            search_box.fill("gift pack")
+            search_box.press("Enter")
+            time.sleep(5)  # Let dynamic results load fully
+            
+            # Scroll down slightly to trigger images and discount elements
+            page.evaluate("window.scrollBy(0, 1200)")
+            time.sleep(2)
+            
+            # Step 3: Target absolute text layers rather than fragile CSS classes
+            items = page.query_selector_all("a[href*='/prn/'], a[href*='/pn/'], [class*='ProductCard']")
+            print(f"📊 BLINKIT ({pincode}): Successfully pulled {len(items)} products using search parameters.")
+            
+            for item in items:
+                try:
+                    text_content = item.inner_text().split("\n")
+                    if len(text_content) >= 3:
+                        name = text_content[0].strip()
                         
-                    if mrp > price and price > 0:
-                        discount = ((mrp - price) / mrp) * 100
-                        if discount >= LOOT_DISCOUNT_THRESHOLD:
-                            send_loot_alert(platform, name, price, mrp, discount, pincode)
-            except Exception: continue
-    except Exception as e: 
-        print(f"⚠️ {platform.upper()} parsing exception: {e}")
+                        # Find price tracking structures within the card stack
+                        prices = [float(''.join(c for c in t if c.isdigit())) for t in text_content if "₹" in t]
+                        if len(prices) >= 2:
+                            current_price, mrp = prices[0], prices[1]
+                            if mrp > current_price and current_price > 0:
+                                discount = ((mrp - current_price) / mrp) * 100
+                                if discount >= LOOT_DISCOUNT_THRESHOLD:
+                                    send_loot_alert("blinkit", name, current_price, mrp, discount, pincode)
+                except: continue
+    except Exception as e:
+        print(f"⚠️ Search tracking exception: {e}")
     finally:
-        if page: page.close()
+        page.close()
 
 def main():
-    platforms = ["blinkit", "zepto"] # Focus on main platforms for verification run
+    print("🤖 Launching Invisible Search-Based Scraping Fleet...")
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(
-            user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            viewport={"width": 1280, "height": 800}
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            viewport={"width": 1440, "height": 900}
         )
         for pin in NCR_WAREHOUSE_PINCODES:
-            for app in platforms:
-                scrape_quick_commerce(context, app, pin)
-                time.sleep(2)
+            scrape_blinkit_via_search(context, pin)
+            time.sleep(3)
         browser.close()
 
 if __name__ == "__main__":
