@@ -24,6 +24,6 @@ jobs:
 
       - name: Run Loot Scraper
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.8883600849:AAHYq4WPcKEIIBvSiNXwdacw-PgVP7I6paU }}
-          TELEGRAM_CHAT_ID: ${{ secrets.loot }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python multi_platform_loot_finder.py
