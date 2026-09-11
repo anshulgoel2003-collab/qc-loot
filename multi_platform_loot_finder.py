@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import requests
 from playwright.sync_api import sync_playwright
@@ -6,7 +7,7 @@ from playwright.sync_api import sync_playwright
 # 1. SYSTEM GATEWAY SETTINGS
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "YOUR_TELEGRAM_CHAT_ID")
-LOOT_DISCOUNT_THRESHOLD = 40.0  # Kept at 20.0 to guarantee you get test alerts right now!
+LOOT_DISCOUNT_THRESHOLD = 20.0  # Kept at 20.0 to guarantee immediate push notifications!
 
 NCR_WAREHOUSE_PINCODES = ["110020", "110040", "110050", "201306", "122018"]
 SPAM_KEYWORDS = ["carry bag", "paper bag", "sachet", "polybag", "sample", "tester"]
@@ -25,59 +26,70 @@ def send_loot_alert(platform: str, name: str, price: float, mrp: float, discount
         f"📉 *Discount:* `{discount:.1f}% OFF`\n"
         f"📍 *Pincode:* {pin}\n"
     )
-    try: requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": msg, "parse_mode": "Markdown"}, timeout=10)
-    except: pass
+    try: 
+        requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": msg, "parse_mode": "Markdown"}, timeout=10)
+    except: 
+        pass
 
 def scrape_blinkit_via_search(context, pincode: str):
-    """Bypasses deep category blocks by mimicking a real search engine user."""
+    """Bypasses web walls by mimicking search routing and applying loose text extraction regex."""
     page = context.new_page()
     try:
-        # Step 1: Open Homepage smoothly
-        print(f"🏠 Opening Blinkit Homepage for pin {pincode}...")
-        page.goto("https://blinkit.com/", timeout=60000, wait_until="networkidle")
+        print(f"🏠 Loading Blinkit and configuring warehouse sector profile: {pincode}...")
+        page.goto("https://blinkit.com", timeout=60000, wait_until="commit")
         
-        # Inject location criteria to local browser cache
+        # Inject target pincode directly to active storage
         page.evaluate(f"localStorage.setItem('local_pincode', '{pincode}');")
-        page.goto("https://blinkit.com/", timeout=40000, wait_until="domcontentloaded")
+        page.goto("https://blinkit.com", timeout=40000, wait_until="domcontentloaded")
+        time.sleep(2)
         
-        # Step 2: Use the Search Box like a real human shopper
+        # Interact with the search field framework
         search_box = page.query_selector("input[placeholder*='Search'], input[type='text']")
         if search_box:
             search_box.click()
             search_box.fill("gift pack")
             search_box.press("Enter")
-            time.sleep(5)  # Let dynamic results load fully
+            time.sleep(5)  # Safe structural pause for dynamic shelf content to load
             
-            # Scroll down slightly to trigger images and discount elements
-            page.evaluate("window.scrollBy(0, 1200)")
+            # Scroll downwards to expand hidden grid elements
+            page.evaluate("window.scrollBy(0, 1000)")
             time.sleep(2)
             
-            # Step 3: Target absolute text layers rather than fragile CSS classes
+            # Target broad anchored product links
             items = page.query_selector_all("a[href*='/prn/'], a[href*='/pn/'], [class*='ProductCard']")
-            print(f"📊 BLINKIT ({pincode}): Successfully pulled {len(items)} products using search parameters.")
+            print(f"📊 BLINKIT ({pincode}): Detected {len(items)} raw interactive element blocks.")
             
             for item in items:
                 try:
-                    text_content = item.inner_text().split("\n")
-                    if len(text_content) >= 3:
-                        name = text_content[0].strip()
+                    raw_text = item.inner_text().strip()
+                    if not raw_text or "₹" not in raw_text:
+                        continue
                         
-                        # Find price tracking structures within the card stack
-                        prices = [float(''.join(c for c in t if c.isdigit())) for t in text_content if "₹" in t]
-                        if len(prices) >= 2:
-                            current_price, mrp = prices[0], prices[1]
-                            if mrp > current_price and current_price > 0:
-                                discount = ((mrp - current_price) / mrp) * 100
-                                if discount >= LOOT_DISCOUNT_THRESHOLD:
-                                    send_loot_alert("blinkit", name, current_price, mrp, discount, pincode)
-                except: continue
+                    lines = [line.strip() for line in raw_text.split("\n") if line.strip()]
+                    product_name = lines[0] # Grab the very first line as the identifier string
+                    
+                    # Regex logic: Pull out all numbers that come directly after a Rupee symbol
+                    found_prices = [float(num) for num in re.findall(r"₹\s*([\d,]+)", raw_text)]
+                    
+                    if len(found_prices) >= 2:
+                        # Sort array data: the smaller value is always the sale price, the larger is the MRP
+                        current_price = min(found_prices)
+                        mrp = max(found_prices)
+                        
+                        if mrp > current_price and current_price > 0:
+                            discount = ((mrp - current_price) / mrp) * 100
+                            if discount >= LOOT_DISCOUNT_THRESHOLD:
+                                print(f"✅ Matched Condition: {product_name} ({discount:.1f}% OFF)")
+                                send_loot_alert("blinkit", product_name, current_price, mrp, discount, pincode)
+                except: 
+                    continue
     except Exception as e:
-        print(f"⚠️ Search tracking exception: {e}")
+        print(f"⚠️ App automation tracking exception: {e}")
     finally:
         page.close()
 
 def main():
-    print("🤖 Launching Invisible Search-Based Scraping Fleet...")
+    print("🤖 Launching Regex-Based Search Scraper Engine...")
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(
@@ -86,7 +98,7 @@ def main():
         )
         for pin in NCR_WAREHOUSE_PINCODES:
             scrape_blinkit_via_search(context, pin)
-            time.sleep(3)
+            time.sleep(2)
         browser.close()
 
 if __name__ == "__main__":
