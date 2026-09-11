@@ -1,9 +1,11 @@
 import os
 import requests
 
-# 1. SYSTEM GATEWAY SETTINGS (Reads from your hidden GitHub Settings Vault)
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "YOUR_TELEGRAM_CHAT_ID")
+# 1. DIRECT HARDCODED CREDENTIALS (Bypasses GitHub Settings Vault entirely!)
+TELEGRAM_TOKEN = "8883600849:AAHYq4WPcKEIIBvSiNXwdacw-PgVP7I6paU"
+
+# ⚠️ MANUALLY REPLACE THE VALUE BELOW WITH YOUR 9-10 DIGIT NUMBER CODE FROM @userinfobot!
+TELEGRAM_CHAT_ID = "1848239469" 
 
 def fire_local_diagnostic_alert():
     """Generates a self-contained test deal in local memory and pushes it directly to Telegram."""
@@ -11,7 +13,7 @@ def fire_local_diagnostic_alert():
     
     url = f"https://telegram.org{TELEGRAM_TOKEN}/sendMessage"
     
-    # 2. LOCAL TEST PAYLOAD (Completely independent of external websites!)
+    # 2. LOCAL TEST PAYLOAD
     test_title = "Haldiram's Premium Nuts Platter Gift Pack (780g)"
     deal_price = 315
     mrp_value = 2499
@@ -42,7 +44,7 @@ def fire_local_diagnostic_alert():
             print(f"🎉 SUCCESS! Alert successfully pushed to chat thread!")
         else:
             print(f"❌ Telegram Error Code {response.status_code}!")
-            print(f"👉 Tip: Double check your Chat ID tokens or confirm you pressed 'Start' inside @loothidalo_bot.")
+            print(f"👉 Please ensure you pressed the 'Start' button inside your chat with @loothidalo_bot on Telegram.")
     except Exception as e:
         print(f"⚠️ Transmission pipeline connection block: {e}")
 
