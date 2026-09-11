@@ -6,7 +6,7 @@ from playwright.sync_api import sync_playwright
 # 1. SYSTEM GATEWAY SETTINGS
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "YOUR_TELEGRAM_CHAT_ID")
-LOOT_DISCOUNT_THRESHOLD = 20.0  # Kept at 20.0 to guarantee you get test alerts right now!
+LOOT_DISCOUNT_THRESHOLD = 40.0  # Kept at 20.0 to guarantee you get test alerts right now!
 
 NCR_WAREHOUSE_PINCODES = ["110020", "110040", "110050", "201306", "122018"]
 SPAM_KEYWORDS = ["carry bag", "paper bag", "sachet", "polybag", "sample", "tester"]
