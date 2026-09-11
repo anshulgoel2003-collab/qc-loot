@@ -6,24 +6,14 @@ import requests
 
 # 1. SYSTEM GATEWAY SETTINGS
 TELEGRAM_TOKEN = "8883600849:AAHYq4WPcKEIIBvSiNXwdacw-PgVP7I6paU"
-TELEGRAM_CHAT_ID = "1848239469" # ⚠️ Type your 9-10 digit number here!
-LOOT_DISCOUNT_THRESHOLD = 50.0  # Captures only extreme 75% to 99% OFF glitch clearance sales!
+TELEGRAM_CHAT_ID = "1848239469" # ⚠️ Type your 9-10 digit personal ID code here!
+LOOT_DISCOUNT_THRESHOLD = 50.0  # Set at 50.0 for wide-ranging festive discount updates!
 
 def send_loot_alert(deal_title: str, deal_link: str):
-    """Pushes live filtered alerts straight to your phone using secure low-level socket handshakes."""
-    url = f"https://telegram.org{TELEGRAM_TOKEN}/sendMessage"
-    
-    alert_message = (
-        f"🚨 *⚠️ 75%+ LOOT DEAL DETECTED* 🚨\n\n"
-        f"📦 *Deal:* {deal_title}\n"
-        f"🏪 *Target Platform:* QUICK COMMERCE / ONLINE\n\n"
-        f"👉 *View Live Deal Thread:* {deal_link}\n"
-        f"👉 _Open your delivery app immediately and change your location to grab it!_"
-    )
-    
+    """Sends a beautifully formatted push notification alert directly to your phone via Telegram."""
     payload = {
         "chat_id": TELEGRAM_CHAT_ID,
-        "text": alert_message,
+        "text": f"🚨 *⚠️ LIVE DEAL DETECTED* 🚨\n\n📦 *Item:* {deal_title}\n🏪 *Platform:* ONLINE / QUICK COMMERCE\n\n👉 *View Deal:* {deal_link}",
         "parse_mode": "Markdown"
     }
     
@@ -31,21 +21,19 @@ def send_loot_alert(deal_title: str, deal_link: str):
     headers = {"Content-type": "application/json"}
     try:
         connection.request("POST", f"/bot{TELEGRAM_TOKEN}/sendMessage", json.dumps(payload), headers)
-        res = connection.getresponse()
-        if res.status == 200:
-            print(f"🚀 Alert successfully pushed: {deal_title[:30]}...")
+        connection.getresponse()
     except Exception as e:
-        print(f"⚠️ Telegram delivery exception: {e}")
+        print(f"⚠️ Telegram alert failed: {e}")
     finally:
         connection.close()
 
 def monitor_live_loot_feeds():
-    """Scrapes public deal forums where users instantly post active platform pricing bugs."""
+    """Bypasses dynamic web layout blocks using a tag-free global data stream search."""
     print("🔄 Connecting to live public deal aggregator pipelines...")
     
-    target_url = "https://desidime.com"
+    target_url = "https://www.desidime.com/"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
     
     try:
@@ -53,34 +41,39 @@ def monitor_live_loot_feeds():
         if response.status_code == 200:
             raw_html = response.text
             
-            # Match standard deal block structures using regex text isolation patterns
-            deal_blocks = re.findall(r'<a class="deal-title"[^>]*href="([^"]+)"[^>]*>([^<]+)</a>', raw_html)
-            print(f"📊 Live Data Stream: Successfully loaded {len(deal_blocks)} deal entries.")
+            # Bulletproof Fallback: Isolate all dynamic link patterns pointing directly to deal nodes
+            raw_deals = re.findall(r'href="(/deals/[^"]+)"[^>]*>([^<]+)</a>', raw_html)
             
-            for link, title in deal_blocks:
+            # De-duplicate elements to clean data streams
+            unique_deals = list(set(raw_deals))
+            print(f"📊 Live Data Stream: Successfully loaded {len(unique_deals)} structural deal items.")
+            
+            matched_count = 0
+            for link, title in unique_deals:
                 title_clean = title.strip()
-                full_link = f"https://desidime.com{link}"
+                full_link = f"https://www.desidime.com{link}"
                 
-                # Filter for target apps or heavy terms
-                is_target_platform = any(word in title_clean.lower() for word in [
+                # Broad capture targeting across all consumer categories and brands
+                is_target = any(word in title_clean.lower() for word in [
                     "blinkit", "zepto", "instamart", "bigbasket", "haldiram", 
-                    "amazon", "flipkart", "grocery", "swiggy", "zomato"
+                    "amazon", "flipkart", "grocery", "off", "sale", "rs", "₹"
                 ])
                 
-                # Calculate percentage markings inside the text titles
                 has_high_discount = False
                 pct_matches = re.findall(r"(\d+)%", title_clean)
                 for pct in pct_matches:
                     if float(pct) >= LOOT_DISCOUNT_THRESHOLD:
                         has_high_discount = True
                         
-                if any(word in title_clean.lower() for word in ["loot", "glitch", "free", "bug", "error"]):
+                if any(word in title_clean.lower() for word in ["loot", "glitch", "free", "bug", "price"]):
                     has_high_discount = True
                 
-                # If a true bargain pattern executes, fire the webhook instantly
-                if is_target_platform and has_high_discount:
+                if is_target or has_high_discount:
+                    matched_count += 1
                     print(f"✅ Found Active Match: {title_clean}")
                     send_loot_alert(title_clean, full_link)
+                    
+            print(f"🏁 Finished. Dispatched {matched_count} matching alerts to your phone.")
         else:
             print(f"⚠️ Feed access returned status code: {response.status_code}")
     except Exception as e:
