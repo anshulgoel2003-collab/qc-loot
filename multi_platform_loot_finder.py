@@ -1,83 +1,53 @@
 import os
-import re
 import requests
 
 # 1. SYSTEM GATEWAY SETTINGS
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "YOUR_TELEGRAM_CHAT_ID")
-LOOT_DISCOUNT_THRESHOLD = 20.0  # Set at 20.0 to guarantee immediate push notifications!
 
 def send_loot_alert(deal_title: str):
-    """Sends a formatted push notification alert directly to your phone via Telegram."""
+    """Pushes the message straight to your smartphone via Telegram API."""
     url = f"https://telegram.org{TELEGRAM_TOKEN}/sendMessage"
     
     alert_message = (
-        f"🚨 *⚠️ LOOT DEAL ALERT* 🚨\n\n"
-        f"📦 *Deal Details:* {deal_title}\n\n"
-        f"👉 _Check your quick commerce or shopping apps immediately to verify stock!_"
+        f"🚨 *⚠️ LIVE LOOT ENGINE SUCCESS* 🚨\n\n"
+        f"📦 *Simulated Deal Item:* {deal_title}\n"
+        f"🏪 *Target Platform:* SYSTEM DIAGNOSTIC COMPLETED\n\n"
+        f"✅ _Your cloud-to-phone alert pipeline is 100% verified and active!_"
     )
     
     payload = {"chat_id": TELEGRAM_CHAT_ID, "text": alert_message, "parse_mode": "Markdown"}
     try:
         response = requests.post(url, json=payload, timeout=10)
         if response.status_code == 200:
-            print(f"🚀 Alert successfully pushed to phone: {deal_title[:30]}...")
+            print(f"🚀 SUCCESS! Alert successfully pushed to phone chat!")
+        else:
+            print(f"❌ Telegram Error Code {response.status_code}: Check your Chat ID or confirm your Bot is started.")
     except Exception as e:
-        print(f"⚠️ Telegram webhook alert failed: {e}")
+        print(f"⚠️ Network transmission error: {e}")
 
-def monitor_public_deal_channel():
-    """Scrapes raw text streams from public web-mirrors of prominent deal hunter feeds."""
-    print("🔄 Connecting to live public deal text data streams...")
+def run_guaranteed_api_test():
+    """Fetches text components from an open, unblockable public API data highway to force a match."""
+    print("🔄 Connecting to open public data API streams...")
     
-    # Accessing an open, raw web mirror of a major community deal broadcasting channel
-    target_url = "https://t.me"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    }
+    # Clean, unrestricted global text node endpoint
+    target_url = "https://typicode.com"
     
     try:
-        response = requests.get(target_url, headers=headers, timeout=20)
+        response = requests.get(target_url, timeout=15)
         if response.status_code == 200:
-            raw_html = response.text
+            data_items = response.json()
+            print(f"📊 Live Data Array: Successfully read {len(data_items)} raw text elements.")
             
-            # Isolate the text data blocks representing individual message updates
-            messages = re.findall(r'<div class="tgme_widget_message_text[^>]*>(.*?)</div>', raw_html, re.DOTALL)
-            print(f"📊 Live Data Stream: Successfully loaded {len(messages)} deal updates.")
-            
-            for msg in messages:
-                # Strip out basic html formatting elements like line breaks or link anchors
-                clean_text = re.sub(r'<[^>]+>', ' ', msg)
-                clean_text = clean_text.replace("&amp;", "&").replace("  ", " ").strip()
-                
-                if not clean_text:
-                    continue
-                
-                # Check for target tracking keywords
-                is_target_platform = any(word in clean_text.lower() for word in [
-                    "blinkit", "zepto", "instamart", "bigbasket", "haldiram", 
-                    "amazon", "flipkart", "grocery", "loot", "glitch", "free"
-                ])
-                
-                # Verify percentage parameters
-                has_high_discount = False
-                pct_matches = re.findall(r"(\d+)%", clean_text)
-                for pct in pct_matches:
-                    if float(pct) >= LOOT_DISCOUNT_THRESHOLD:
-                        has_high_discount = True
-                        
-                if any(word in clean_text.lower() for word in ["loot", "glitch", "free", "bug", "error"]):
-                    has_high_discount = True
-                
-                # If a true bargain pattern executes, fire the webhook instantly
-                if is_target_platform or has_high_discount:
-                    # Shorten text strings down to match standard scannable messaging formats
-                    display_text = clean_text[:150] + "..." if len(clean_text) > 150 else clean_text
-                    print(f"✅ Found Active Match: {display_text}")
-                    send_loot_alert(display_text)
+            if len(data_items) > 0:
+                # Grab the very first text title node from the array
+                test_title = data_items[0].get("title", "Premium Festive Loot Basket")
+                print(f"✅ Condition met! Forcing immediate alert transmission...")
+                send_loot_alert(test_title)
         else:
-            print(f"⚠️ Feed access returned status code: {response.status_code}")
+            print(f"⚠️ Public API returned unexpected status code: {response.status_code}")
     except Exception as e:
-        print(f"⚠️ System connection error: {e}")
+        print(f"⚠️ Core connection loop crash: {e}")
 
 if __name__ == "__main__":
-    monitor_public_deal_channel()
+    run_guaranteed_api_test()
