@@ -1,53 +1,50 @@
 import os
 import requests
 
-# 1. SYSTEM GATEWAY SETTINGS
+# 1. SYSTEM GATEWAY SETTINGS (Reads from your hidden GitHub Settings Vault)
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "YOUR_TELEGRAM_CHAT_ID")
 
-def send_loot_alert(deal_title: str):
-    """Pushes the message straight to your smartphone via Telegram API."""
+def fire_local_diagnostic_alert():
+    """Generates a self-contained test deal in local memory and pushes it directly to Telegram."""
+    print("🔄 Initializing local diagnostic engine...")
+    
     url = f"https://telegram.org{TELEGRAM_TOKEN}/sendMessage"
     
+    # 2. LOCAL TEST PAYLOAD (Completely independent of external websites!)
+    test_title = "Haldiram's Premium Nuts Platter Gift Pack (780g)"
+    deal_price = 315
+    mrp_value = 2499
+    discount_pct = 87.4
+    active_zone = "110040 (Okhla Warehouse)"
+    
     alert_message = (
-        f"🚨 *⚠️ LIVE LOOT ENGINE SUCCESS* 🚨\n\n"
-        f"📦 *Simulated Deal Item:* {deal_title}\n"
-        f"🏪 *Target Platform:* SYSTEM DIAGNOSTIC COMPLETED\n\n"
-        f"✅ _Your cloud-to-phone alert pipeline is 100% verified and active!_"
+        f"🚨 *⚠️ SIMULATED 75%+ LOOT DEAL DETECTED* 🚨\n\n"
+        f"📦 *Product:* {test_title}\n"
+        f"🏪 *Platform:* BLINKIT SYSTEM TEST\n"
+        f"💰 *Deal Price:* ₹{deal_price}  (MRP: ~₹{mrp_value}~)\n"
+        f"📉 *Discount:* `{discount_pct}% OFF`\n"
+        f"📍 *Target Warehouse:* {active_zone}\n\n"
+        f"✅ *SUCCESS:* Your automated cloud-to-phone alert pipeline is 100% verified and active!"
     )
     
-    payload = {"chat_id": TELEGRAM_CHAT_ID, "text": alert_message, "parse_mode": "Markdown"}
-    try:
-        response = requests.post(url, json=payload, timeout=10)
-        if response.status_code == 200:
-            print(f"🚀 SUCCESS! Alert successfully pushed to phone chat!")
-        else:
-            print(f"❌ Telegram Error Code {response.status_code}: Check your Chat ID or confirm your Bot is started.")
-    except Exception as e:
-        print(f"⚠️ Network transmission error: {e}")
-
-def run_guaranteed_api_test():
-    """Fetches text components from an open, unblockable public API data highway to force a match."""
-    print("🔄 Connecting to open public data API streams...")
-    
-    # Clean URL string mapped correctly
-    target_url = "https://typicode.com"
+    payload = {
+        "chat_id": TELEGRAM_CHAT_ID,
+        "text": alert_message,
+        "parse_mode": "Markdown"
+    }
     
     try:
-        response = requests.get(target_url, timeout=15)
+        print("🚀 Executing direct secure webhook transmission to your phone...")
+        response = requests.post(url, json=payload, timeout=15)
+        
         if response.status_code == 200:
-            data_items = response.json()
-            print(f"📊 Live Data Array: Successfully read {len(data_items)} raw text elements.")
-            
-            if len(data_items) > 0:
-                first_item = data_items[0]
-                test_title = first_item.get("title", "Premium Festive Loot Basket")
-                print(f"✅ Condition met! Forcing immediate alert transmission...")
-                send_loot_alert(test_title)
+            print(f"🎉 SUCCESS! Alert successfully pushed to chat thread!")
         else:
-            print(f"⚠️ Public API returned unexpected status code: {response.status_code}")
+            print(f"❌ Telegram Error Code {response.status_code}!")
+            print(f"👉 Tip: Double check your Chat ID tokens or confirm you pressed 'Start' inside @loothidalo_bot.")
     except Exception as e:
-        print(f"⚠️ Core connection loop crash: {e}")
+        print(f"⚠️ Transmission pipeline connection block: {e}")
 
 if __name__ == "__main__":
-    run_guaranteed_api_test()
+    fire_local_diagnostic_alert()
