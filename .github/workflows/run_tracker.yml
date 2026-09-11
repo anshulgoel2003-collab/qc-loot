@@ -19,8 +19,7 @@ jobs:
 
       - name: Install System Dependencies
         run: |
-          pip install requests playwright
-          playwright install chromium
+          pip install requests
 
       - name: Run Loot Scraper
         env:
