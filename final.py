@@ -3,24 +3,21 @@ import requests
 def run_clean_ping():
     print("🔄 Initializing completely fresh diagnostic check...")
     
-    # Clean hardcoded token layers
-    raw_token = "8883600849:AAHYq4WPcKEIIBvSiNXwdacw-PgVP7I6paU"
+    # 1. Clean hardcoded token layers from @BotFather
+    token = "8883600849:AAHYq4WPcKEIIBvSiNXwdacw-PgVP7I6paU"
     
-    # ⚠️ REPLACE THE VALUE BELOW WITH YOUR 9-10 DIGIT NUMBER CODE FROM @userinfobot!
-    # Ensure you keep the quotation marks around the number string.
+    # 2. ⚠️ REPLACE THE VALUE BELOW WITH YOUR 9-10 DIGIT NUMBER CODE FROM @userinfobot!
+    # Make sure to keep the quotation marks around the number digits.
     chat_id = "1848239469" 
     
-    # Automatically strip any hidden or invisible characters that break URL parsers
-    bot_token = raw_token.strip().replace(" ", "")
-    
-    # Constructing the exact, verified API endpoint destination link
-    target_url = f"https://telegram.org{bot_token}/sendMessage"
+    # 3. Safe string construction to completely avoid layout punctuation typos
+    target_url = "https://telegram.org" + token + "/sendMessage"
     
     message = (
         "🚨 *⚠️ LIVE ENGINE PIPELINE SUCCESS* 🚨\n\n"
         "📦 *Product:* Haldiram's Nuts Platter (780g)\n"
         "💰 *Deal Price:* ₹315 (MRP: ₹2499)\n\n"
-        "✅ *CACHE SUCCESSFULLY SHATTERED:* Your automation engine is fully active!"
+        "✅ *SUCCESS:* Your automation engine is fully active and running!"
     )
     
     payload = {
@@ -32,10 +29,11 @@ def run_clean_ping():
     print("🚀 Firing direct network post to live Telegram API servers...")
     res = requests.post(target_url, json=payload, timeout=10)
     
+    print(f"📊 Server Status Code: {res.status_code}")
     if res.status_code == 200:
         print("🎉 SUCCESS! The alert has officially hit your Telegram chat thread!")
     else:
-        print(f"❌ Error Code: {res.status_code} - Confirm you pressed 'Start' inside the bot chat window.")
+        print(f"❌ Error Response: {res.text}")
 
 if __name__ == "__main__":
     run_clean_ping()
