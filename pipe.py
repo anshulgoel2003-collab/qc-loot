@@ -7,7 +7,7 @@ import requests
 # 1. SYSTEM GATEWAY SETTINGS
 TELEGRAM_TOKEN = "8883600849:AAHYq4WPcKEIIBvSiNXwdacw-PgVP7I6paU"
 TELEGRAM_CHAT_ID = "1848239469" # ⚠️ Type your 9-10 digit number here!
-LOOT_DISCOUNT_THRESHOLD = 75.0  # Captures only extreme 75% to 99% OFF glitch clearance sales!
+LOOT_DISCOUNT_THRESHOLD = 50.0  # Captures only extreme 75% to 99% OFF glitch clearance sales!
 
 def send_loot_alert(deal_title: str, deal_link: str):
     """Pushes live filtered alerts straight to your phone using secure low-level socket handshakes."""
